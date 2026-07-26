@@ -1335,28 +1335,39 @@ function AgentRoster() {
         {agents.map((a) => {
           const net = pnlMap.get(a.key) ?? 0;
           const positive = net >= 0;
-          const emoji = emojiFor(a.name);
           const lastDecision = a.recentDecisions?.[0];
           const balanceStr = `$${(a.balance ?? 0).toFixed(2)}`;
+          const avatarMap: Record<string, string> = {
+            vega: "/Vega-pfp.png", cygnus: "/Cygnus-pfp.png", orion: "/orion-pfp.png",
+            atlas: "/atlas-pfp.png", nova: "/nova-pfp.png", striker: "/striker-pfp.png",
+            pulse: "/pulse-pfp.png", sage: "/sage-pfp.png",
+          };
+          const avatar = avatarMap[a.key?.toLowerCase()] ?? "/logo.png";
+          const arcscanUrl = a.address ? `https://testnet.arcscan.app/address/${a.address}` : null;
           return (
             <div
               key={a.key}
               className="p-3 rounded-lg border border-glass-border bg-white/[0.02] hover:border-teal/20 transition-colors"
             >
               <div className="flex items-center gap-2 mb-2">
-                <div className="size-9 rounded-lg flex items-center justify-center text-base bg-teal/15 text-teal">
-                  {emoji}
-                </div>
+                <img src={avatar} alt={a.name} className="size-9 rounded-lg object-cover border border-teal/20" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <p className="text-sm font-semibold text-white truncate">{a.name}</p>
-                    <span className="text-[9px] font-mono text-slate-500 uppercase shrink-0">
-                      · {a.role}
+                    <span className="text-[8px] font-mono px-1 py-0.5 rounded bg-teal/10 text-teal border border-teal/20">
+                      ERC-8004
                     </span>
                   </div>
-                  <p className="text-[10px] font-mono text-slate-500 truncate">
-                    {shortAddr(a.address)} · {a.brain}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    {arcscanUrl ? (
+                      <a href={arcscanUrl} target="_blank" rel="noopener" className="text-[10px] font-mono text-teal/70 hover:text-teal transition-colors">
+                        {shortAddr(a.address)}
+                      </a>
+                    ) : (
+                      <span className="text-[10px] font-mono text-slate-500">{shortAddr(a.address)}</span>
+                    )}
+                    <span className="text-[10px] font-mono text-slate-600">· {a.brain}</span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="size-1.5 rounded-full animate-pulse bg-teal" />
@@ -1449,6 +1460,9 @@ function BondSlashPanel() {
                 <p className="text-[10px] text-slate-500 truncate">
                   {b.stance} · {b.title}
                 </p>
+                <a href="https://testnet.arcscan.app/address/0xc3bbfccfd885d14898dff697435a090ba5919497" target="_blank" rel="noopener" className="text-[9px] font-mono text-teal/50 hover:text-teal transition-colors">
+                  verify on Arcscan ↗
+                </a>
               </div>
             </li>
           );
@@ -1497,6 +1511,9 @@ function DuelsPanel() {
               <span className="text-pink font-semibold truncate">{d.agentNo.name}</span>
             </div>
             <p className="text-[10px] text-slate-500 mt-1 truncate">{d.status}</p>
+            <a href="https://testnet.arcscan.app/address/0x994de4bfd8adb6e882cc5432a0c8ceb54da84e49" target="_blank" rel="noopener" className="text-[9px] font-mono text-teal/50 hover:text-teal transition-colors mt-0.5 inline-block">
+              AgentDuel contract ↗
+            </a>
           </li>
         ))}
         {!isLoading && duels.length === 0 && (
