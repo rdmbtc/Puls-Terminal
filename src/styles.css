@@ -188,3 +188,9 @@
     color: var(--color-foreground);
   }
 }
+
+/* Live Tape marquee scroll */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}

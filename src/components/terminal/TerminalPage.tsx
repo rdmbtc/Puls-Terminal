@@ -167,6 +167,10 @@ export function TerminalPage() {
         <header className="mb-6">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
             <div className="flex items-center gap-3">
+              <a href="https://pulsmarket.tech" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-glass-border bg-white/5 hover:bg-white/10 text-slate-400 hover:text-teal transition-all text-[10px] font-mono uppercase tracking-wider" title="Back to Puls">
+                <ArrowUpRight className="size-3 rotate-[225deg]" />
+                <span className="hidden sm:inline">Puls</span>
+              </a>
               <BrandMark />
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-white uppercase leading-none">
@@ -372,6 +376,28 @@ export function TerminalPage() {
           </div>
         </div>
         )}
+
+        {/* Footer */}
+        <footer className="mt-12 mb-16 border-t border-glass-border pt-6">
+          <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-4 text-[10px] font-mono text-slate-500">
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Puls" className="size-5 rounded" />
+              <span className="text-slate-400">Puls Terminal</span>
+              <span>·</span>
+              <span>Prediction markets on Arc, traded by AI</span>
+            </div>
+            <nav className="flex items-center gap-4">
+              <a href="https://pulsmarket.tech" className="hover:text-teal transition-colors">Home</a>
+              <a href="https://app.pulsmarket.tech" className="hover:text-teal transition-colors">App</a>
+              <a href="https://pulsmarket.tech/pulse" className="hover:text-teal transition-colors">Agent Feed</a>
+              <a href="https://pulsmarket.tech/versus" className="hover:text-teal transition-colors">Versus</a>
+              <a href="https://pulsmarket.tech/stats" className="hover:text-teal transition-colors">Stats</a>
+              <a href="https://pulsmarket.tech/explorer" className="hover:text-teal transition-colors">Explorer</a>
+              <a href="https://github.com/rdmbtc/Puls" target="_blank" rel="noopener" className="hover:text-teal transition-colors">GitHub</a>
+              <a href="https://x.com/pulsmarket" target="_blank" rel="noopener" className="hover:text-pink transition-colors">𝕏 @pulsmarket</a>
+            </nav>
+          </div>
+        </footer>
       </div>
 
       <LiveTicker />
@@ -403,10 +429,8 @@ export function TerminalPage() {
 function BrandMark() {
   return (
     <div className="relative">
-      <div className="size-11 bg-gradient-to-br from-teal via-teal/40 to-pink/40 rounded-xl flex items-center justify-center border border-teal/30 shadow-[0_0_28px_rgba(45,212,191,0.35)]">
-        <div className="size-5 bg-navy rounded-sm rotate-45 flex items-center justify-center">
-          <div className="size-2 bg-teal -rotate-45 rounded-[1px]" />
-        </div>
+      <div className="size-11 rounded-xl flex items-center justify-center border border-teal/30 shadow-[0_0_28px_rgba(45,212,191,0.35)] overflow-hidden">
+        <img src="/logo.png" alt="Puls" className="size-11 object-cover" />
       </div>
       <div className="absolute -inset-1 rounded-xl bg-teal/20 blur-lg -z-10" />
     </div>
@@ -845,10 +869,15 @@ function Arena({ market }: { market: NormalizedMarket }) {
         </div>
 
         <div className="flex items-center gap-2 mt-5">
-          <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-teal text-navy font-bold text-xs uppercase tracking-wider hover:bg-teal/90 transition-all shadow-[0_0_24px_rgba(45,212,191,0.35)]">
+          <a
+            href={`https://app.pulsmarket.tech/m/${market.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-teal text-navy font-bold text-xs uppercase tracking-wider hover:bg-teal/90 transition-all shadow-[0_0_24px_rgba(45,212,191,0.35)]"
+          >
             <ArrowUpRight className="size-3.5" />
             Show market
-          </button>
+          </a>
           <button className="px-4 py-2.5 rounded-lg border border-glass-border bg-white/5 hover:bg-white/10 text-xs font-medium text-slate-300 transition-colors flex items-center gap-2">
             <Bot className="size-3.5 text-teal" />
             Delegate to agent
@@ -1562,7 +1591,7 @@ function LiveTicker() {
             Live Tape
           </span>
         </div>
-        <div className="flex items-center gap-6 text-[11px] font-mono text-slate-400 overflow-hidden whitespace-nowrap">
+        <div className="flex items-center gap-6 text-[11px] font-mono text-slate-400 overflow-hidden whitespace-nowrap animate-[marquee_30s_linear_infinite]">
           {events.length === 0 && <span className="text-slate-600">Waiting for feed…</span>}
           {events.slice(0, 8).map((e, i) => {
             const tone = feedTone(e.action);
