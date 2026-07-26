@@ -221,6 +221,7 @@ export function TerminalPage() {
         </header>
 
         {/* ===== TAB CONTENT ===== */}
+        <div key={tab} className="animate-[fade-in-up_0.2s_ease-out]">
         {(tab === "Overview" || tab === "Markets") && (
         <ResizableColumns
           left={
@@ -376,6 +377,7 @@ export function TerminalPage() {
           </div>
         </div>
         )}
+        </div>{/* end tab content animated wrapper */}
 
         {/* Footer */}
         <footer className="mt-12 mb-16 border-t border-glass-border pt-6">
@@ -508,7 +510,7 @@ function BigStat({
     <div className="bg-glass border border-glass-border p-4 rounded-xl backdrop-blur-md relative overflow-hidden group hover:border-teal/20 transition-colors">
       <div className="absolute -top-8 -right-8 size-24 bg-teal/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
       <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-      <p className="text-2xl font-mono text-white font-medium leading-tight">{value}</p>
+      <p className="text-2xl font-mono text-white font-medium leading-tight animate-[count-fade_0.8s_ease-out]">{value}</p>
       {delta && (
         <div className={"flex items-center gap-1 mt-1 text-[10px] font-mono " + toneCls}>
           <TrendingUp className="size-3" />
@@ -735,10 +737,10 @@ function MarketRow({
     <button
       onClick={onClick}
       className={
-        "w-full text-left p-3 rounded-xl border backdrop-blur-md transition-all group " +
+        "w-full text-left p-3 rounded-xl border backdrop-blur-md transition-all duration-200 group " +
         (active
           ? "bg-teal/5 border-teal/40 shadow-[0_0_24px_rgba(45,212,191,0.15)]"
-          : "bg-glass border-glass-border hover:border-teal/20 hover:bg-white/[0.04]")
+          : "bg-glass border-glass-border hover:border-teal/30 hover:bg-white/[0.04] hover:shadow-[0_0_16px_rgba(45,212,191,0.1)]")
       }
     >
       <div className="flex items-center justify-between mb-2">
@@ -985,7 +987,7 @@ function X402Panel() {
             href={p.arcscanUrl ?? "#"}
             target={p.arcscanUrl ? "_blank" : undefined}
             rel="noreferrer"
-            className="flex items-center justify-between p-1.5 rounded bg-white/[0.02] border border-glass-border hover:border-[color:var(--color-purple)]/40 transition-colors"
+            className="flex items-center justify-between p-1.5 rounded bg-white/[0.02] border border-glass-border hover:border-[color:var(--color-purple)]/40 transition-colors animate-[x402-flash_1s_ease-out] hover:animate-none"
           >
             <span className="text-[color:var(--color-purple)] truncate max-w-[100px]" title={p.from}>
               {p.from}
@@ -1092,15 +1094,26 @@ function SwarmVisualizer() {
     [count, agents],
   );
 
-  // Generate payment animation lines from recent feed events
+  // Generate payment animation lines — continuous flow + on new events
   const [paymentLines, setPaymentLines] = useState<Array<{from: number; to: number; id: string}>>([]);
   useEffect(() => {
+    if (nodes.length < 2) return;
+    // Continuous particle flow every 2.5s
+    const interval = setInterval(() => {
+      const from = Math.floor(Math.random() * nodes.length);
+      let to = Math.floor(Math.random() * nodes.length);
+      if (to === from) to = (to + 1) % nodes.length;
+      setPaymentLines((prev) => [...prev.slice(-6), { from, to, id: `flow-${Date.now()}-${Math.random()}` }]);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [nodes.length]);
+  // Also trigger on new feed events
+  useEffect(() => {
     if (!feedData?.events?.length || nodes.length < 2) return;
-    const id = `pay-${Date.now()}`;
     const from = Math.floor(Math.random() * nodes.length);
     let to = Math.floor(Math.random() * nodes.length);
     if (to === from) to = (to + 1) % nodes.length;
-    setPaymentLines((prev) => [...prev.slice(-4), { from, to, id }]);
+    setPaymentLines((prev) => [...prev.slice(-6), { from, to, id: `evt-${Date.now()}` }]);
   }, [feedData?.events?.length, nodes.length]);
 
   return (
@@ -1261,7 +1274,7 @@ function DecisionRow({ e }: { e: FeedEvent }) {
   const question = e.question || "";
   const side = e.side;
   return (
-    <li className="flex items-start gap-2 p-1.5 rounded hover:bg-white/[0.03] transition-colors">
+    <li className="flex items-start gap-2 p-1.5 rounded hover:bg-white/[0.03] transition-colors animate-[slide-in-up_0.3s_ease-out]">
       <span className="text-slate-600 tabular-nums shrink-0">{relTime(e.at)}</span>
       <span
         className={
@@ -1406,7 +1419,9 @@ function BondSlashPanel() {
           return (
             <li
               key={b.signalId}
-              className="flex items-start gap-2 p-2 rounded-md bg-white/[0.02] border border-glass-border"
+              className={`flex items-start gap-2 p-2 rounded-md bg-white/[0.02] border border-glass-border ${
+                slash ? "animate-[flash-red_1s_ease-out]" : "animate-[flash-green_1s_ease-out]"
+              }`}
             >
               <span
                 className={
@@ -1583,42 +1598,44 @@ function LiveTicker() {
   const { data } = useFeed(10);
   const events = data?.events ?? [];
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-navy/85 backdrop-blur-xl border-t border-glass-border z-40">
-      <div className="max-w-[1400px] mx-auto px-6 h-10 flex items-center gap-6 overflow-hidden">
+    <div className="fixed bottom-0 left-0 right-0 bg-navy/90 backdrop-blur-xl border-t border-glass-border z-40 overflow-hidden">
+      <div className="max-w-[1400px] mx-auto px-6 h-10 flex items-center gap-6">
         <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
           <span className="size-1.5 bg-pink rounded-full animate-pulse" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-white">
             Live Tape
           </span>
         </div>
-        <div className="flex items-center gap-6 text-[11px] font-mono text-slate-400 overflow-hidden whitespace-nowrap animate-[marquee_30s_linear_infinite]">
-          {events.length === 0 && <span className="text-slate-600">Waiting for feed…</span>}
-          {events.slice(0, 8).map((e, i) => {
-            const tone = feedTone(e.action);
-            const name = e.agentName || e.agentKey || "agent";
-            return (
-              <span key={i} className="flex items-center gap-2 shrink-0">
-                <span
-                  className={
-                    "text-[9px] font-bold px-1 py-0.5 rounded " + tone.className
-                  }
-                >
-                  {tone.label}
-                </span>
-                <span className="text-white">{name}</span>
-                {e.side && (
-                  <span className={e.side === "YES" ? "text-teal" : "text-pink"}>
-                    {e.side}
+        <div className="flex-1 overflow-hidden relative">
+          <div className="flex items-center gap-6 text-[11px] font-mono whitespace-nowrap animate-[marquee_40s_linear_infinite] hover:pause" style={{ width: "max-content" }}>
+            {events.length === 0 && <span className="text-slate-600">Waiting for feed…</span>}
+            {[...events.slice(0, 8), ...events.slice(0, 8)].map((e, i) => {
+              const tone = feedTone(e.action);
+              const name = e.agentName || e.agentKey || "agent";
+              return (
+                <span key={i} className="flex items-center gap-2 shrink-0 animate-[glow-text_4s_ease-in-out_infinite]" style={{ animationDelay: `${i * 0.3}s` }}>
+                  <span
+                    className={
+                      "text-[9px] font-bold px-1 py-0.5 rounded " + tone.className
+                    }
+                  >
+                    {tone.label}
                   </span>
-                )}
-                {typeof e.amount === "number" && (
-                  <span className="text-slate-400">${e.amount.toFixed(3)}</span>
-                )}
-                <span className="text-slate-600">· {relTime(e.at)}</span>
-                <span className="text-slate-700">|</span>
-              </span>
-            );
-          })}
+                  <span className="text-white">{name}</span>
+                  {e.side && (
+                    <span className={e.side === "YES" ? "text-teal" : "text-pink"}>
+                      {e.side}
+                    </span>
+                  )}
+                  {typeof e.amount === "number" && (
+                    <span className="text-slate-400">${e.amount.toFixed(3)}</span>
+                  )}
+                  <span className="text-slate-600">· {relTime(e.at)}</span>
+                  <span className="text-slate-700 mx-1">│</span>
+                </span>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
