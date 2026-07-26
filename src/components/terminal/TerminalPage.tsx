@@ -872,7 +872,7 @@ function Arena({ market }: { market: NormalizedMarket }) {
 
         <div className="flex items-center gap-2 mt-5">
           <a
-            href={`https://app.pulsmarket.tech/?m=${market.slug}`}
+            href={`https://pulsmarket.tech/m/${market.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-teal text-navy font-bold text-xs uppercase tracking-wider hover:bg-teal/90 transition-all shadow-[0_0_24px_rgba(45,212,191,0.35)]"
