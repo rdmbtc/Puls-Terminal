@@ -1028,21 +1028,52 @@ function ResolutionTimeline({ market }: { market: NormalizedMarket }) {
 
 function SwarmVisualizer() {
   const { data } = useRoster();
-  const count = data?.agents.length ?? 8;
+  const { data: feedData } = useFeed(10);
+  const agents = data?.agents ?? [];
+  const count = agents.length || 8;
+  
+  // Agent avatar mapping
+  const avatarMap: Record<string, string> = {
+    vega: "/Vega-pfp.png",
+    cygnus: "/Cygnus-pfp.png",
+    orion: "/orion-pfp.png",
+    atlas: "/atlas-pfp.png",
+    nova: "/nova-pfp.png",
+    striker: "/striker-pfp.png",
+    pulse: "/pulse-pfp.png",
+    sage: "/sage-pfp.png",
+  };
+  
   const nodes = useMemo(
     () =>
-      Array.from({ length: Math.max(8, count) }, (_, i) => {
-        const angle = (i / Math.max(8, count)) * Math.PI * 2;
-        const r = 46 + (i % 3) * 12;
+      Array.from({ length: Math.max(6, count) }, (_, i) => {
+        const angle = (i / Math.max(6, count)) * Math.PI * 2 - Math.PI / 2;
+        const r = 52;
+        const agent = agents[i];
+        const key = agent?.key?.toLowerCase() ?? `agent-${i}`;
         return {
           x: 90 + Math.cos(angle) * r,
           y: 90 + Math.sin(angle) * r,
-          s: 3 + (i % 3),
+          name: agent?.name?.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "").trim() ?? `Agent ${i}`,
+          avatar: avatarMap[key] ?? "/logo.png",
           color: i % 3 === 0 ? "#2DD4BF" : i % 3 === 1 ? "#EC4899" : "#A78BFA",
+          idx: i,
         };
       }),
-    [count],
+    [count, agents],
   );
+
+  // Generate payment animation lines from recent feed events
+  const [paymentLines, setPaymentLines] = useState<Array<{from: number; to: number; id: string}>>([]);
+  useEffect(() => {
+    if (!feedData?.events?.length || nodes.length < 2) return;
+    const id = `pay-${Date.now()}`;
+    const from = Math.floor(Math.random() * nodes.length);
+    let to = Math.floor(Math.random() * nodes.length);
+    if (to === from) to = (to + 1) % nodes.length;
+    setPaymentLines((prev) => [...prev.slice(-4), { from, to, id }]);
+  }, [feedData?.events?.length, nodes.length]);
+
   return (
     <GlassCard className="p-4">
       <div className="flex items-center justify-between mb-3">
@@ -1056,49 +1087,112 @@ function SwarmVisualizer() {
       </div>
       <div className="relative aspect-square">
         <svg viewBox="0 0 180 180" className="w-full h-full">
-          {[40, 60, 80].map((r) => (
+          {/* Mesh rings */}
+          {[35, 55].map((r) => (
             <circle
               key={r}
               cx="90"
               cy="90"
               r={r}
               fill="none"
-              stroke="rgba(45,212,191,0.08)"
+              stroke="rgba(45,212,191,0.06)"
               strokeDasharray="2 4"
             />
           ))}
-          {nodes.map((n, i) => (
-            <line
-              key={i}
-              x1="90"
-              y1="90"
-              x2={n.x}
-              y2={n.y}
-              stroke={n.color}
-              strokeOpacity="0.15"
-              strokeWidth="0.6"
-            />
-          ))}
-          <circle cx="90" cy="90" r="8" fill="#2DD4BF" opacity="0.15" />
-          <circle cx="90" cy="90" r="4" fill="#2DD4BF">
-            <animate attributeName="r" values="4;7;4" dur="2s" repeatCount="indefinite" />
+          {/* Connection lines between all agents */}
+          {nodes.map((n, i) =>
+            nodes.slice(i + 1).map((m, j) => (
+              <line
+                key={`conn-${i}-${i + j + 1}`}
+                x1={n.x}
+                y1={n.y}
+                x2={m.x}
+                y2={m.y}
+                stroke="rgba(45,212,191,0.08)"
+                strokeWidth="0.5"
+              />
+            )),
+          )}
+          {/* Payment animation lines */}
+          {paymentLines.map((pl) => {
+            const fromNode = nodes[pl.from];
+            const toNode = nodes[pl.to];
+            if (!fromNode || !toNode) return null;
+            return (
+              <g key={pl.id}>
+                <line
+                  x1={fromNode.x}
+                  y1={fromNode.y}
+                  x2={toNode.x}
+                  y2={toNode.y}
+                  stroke="#2DD4BF"
+                  strokeWidth="1.5"
+                  opacity="0.8"
+                >
+                  <animate attributeName="opacity" values="0.8;0" dur="2s" fill="freeze" />
+                </line>
+                <circle r="3" fill="#2DD4BF">
+                  <animateMotion
+                    dur="1.5s"
+                    fill="freeze"
+                    path={`M${fromNode.x},${fromNode.y} L${toNode.x},${toNode.y}`}
+                  />
+                  <animate attributeName="opacity" values="1;0" dur="1.5s" fill="freeze" />
+                </circle>
+              </g>
+            );
+          })}
+          {/* Center hub */}
+          <circle cx="90" cy="90" r="6" fill="#2DD4BF" opacity="0.1" />
+          <circle cx="90" cy="90" r="3" fill="#2DD4BF">
+            <animate attributeName="r" values="3;5;3" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite" />
           </circle>
+          {/* Agent nodes */}
           {nodes.map((n, i) => (
-            <g key={"n" + i}>
-              <circle cx={n.x} cy={n.y} r={n.s + 2} fill={n.color} opacity="0.15" />
-              <circle cx={n.x} cy={n.y} r={n.s} fill={n.color}>
-                <animate
-                  attributeName="opacity"
-                  values="0.6;1;0.6"
-                  dur={`${2 + (i % 3)}s`}
-                  repeatCount="indefinite"
-                />
+            <g key={"node" + i}>
+              {/* Glow */}
+              <circle cx={n.x} cy={n.y} r="12" fill={n.color} opacity="0.08" />
+              {/* Avatar circle */}
+              <clipPath id={`clip-agent-${i}`}>
+                <circle cx={n.x} cy={n.y} r="9" />
+              </clipPath>
+              <circle cx={n.x} cy={n.y} r="9" fill="#0F1629" stroke={n.color} strokeWidth="1" opacity="0.9" />
+              <image
+                href={n.avatar}
+                x={n.x - 9}
+                y={n.y - 9}
+                width="18"
+                height="18"
+                clipPath={`url(#clip-agent-${i})`}
+                style={{ borderRadius: "50%" }}
+              />
+              {/* Pulse on active */}
+              <circle cx={n.x} cy={n.y} r="9" fill="none" stroke={n.color} strokeWidth="0.5">
+                <animate attributeName="r" values="9;14;9" dur={`${3 + (i % 2)}s`} repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.4;0;0.4" dur={`${3 + (i % 2)}s`} repeatCount="indefinite" />
               </circle>
             </g>
           ))}
         </svg>
+        {/* Agent name labels */}
+        <div className="absolute inset-0 pointer-events-none">
+          {nodes.map((n, i) => (
+            <span
+              key={`label-${i}`}
+              className="absolute text-[7px] font-mono text-slate-400 whitespace-nowrap"
+              style={{
+                left: `${(n.x / 180) * 100}%`,
+                top: `${(n.y / 180) * 100 + 8}%`,
+                transform: "translateX(-50%)",
+              }}
+            >
+              {n.name}
+            </span>
+          ))}
+        </div>
         <div className="absolute inset-x-0 bottom-2 text-center text-[9px] font-mono text-slate-500 uppercase tracking-widest">
-          {count} nodes · Arc mesh
+          {count} nodes · x402 mesh · Arc
         </div>
       </div>
     </GlassCard>
