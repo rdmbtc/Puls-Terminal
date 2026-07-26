@@ -84,10 +84,12 @@ export function TerminalPage() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [marketPage, setMarketPage] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
   const notifications = useNotifications();
   const [cfg, update] = useTerminalConfig();
 
-  const marketsQ = useMarkets(12);
+  const marketsQ = useMarkets(30);
   const markets = marketsQ.data ?? [];
   const selected =
     markets.find((m) => m.slug === selectedSlug) ?? markets[0] ?? null;
@@ -214,6 +216,8 @@ export function TerminalPage() {
           <TopStats />
         </header>
 
+        {/* ===== TAB CONTENT ===== */}
+        {(tab === "Overview" || tab === "Markets") && (
         <ResizableColumns
           left={
             <section data-tour="markets" className="space-y-3">
@@ -226,19 +230,60 @@ export function TerminalPage() {
                     : `${markets.length} live`
                 }
               />
+              {/* Search */}
+              <input
+                type="text"
+                placeholder="Search markets…"
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setMarketPage(0); }}
+                className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-teal/30 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal/50 focus:border-teal/50 font-mono"
+              />
               <div className="space-y-2">
                 {marketsQ.isLoading && <SkeletonRows n={5} />}
                 {!marketsQ.isLoading && markets.length === 0 && (
                   <EmptyBlock>No markets returned by API.</EmptyBlock>
                 )}
-                {markets.map((m) => (
-                  <MarketRow
-                    key={m.slug}
-                    market={m}
-                    active={selected?.slug === m.slug}
-                    onClick={() => setSelectedSlug(m.slug)}
-                  />
-                ))}
+                {(() => {
+                  const filtered = searchQuery
+                    ? markets.filter((m) =>
+                        m.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        m.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        m.ticker.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                    : markets;
+                  const perPage = 7;
+                  const totalPages = Math.ceil(filtered.length / perPage);
+                  const paged = filtered.slice(marketPage * perPage, (marketPage + 1) * perPage);
+                  return (
+                    <>
+                      {paged.map((m) => (
+                        <MarketRow
+                          key={m.slug}
+                          market={m}
+                          active={selected?.slug === m.slug}
+                          onClick={() => setSelectedSlug(m.slug)}
+                        />
+                      ))}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-1 pt-2">
+                          {Array.from({ length: totalPages }, (_, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setMarketPage(i)}
+                              className={`px-2.5 py-1 rounded text-xs font-mono transition-all ${
+                                marketPage === i
+                                  ? "bg-teal/20 text-teal border border-teal/40"
+                                  : "bg-white/5 text-slate-400 border border-glass-border hover:text-white hover:bg-white/10"
+                              }`}
+                            >
+                              {i + 1}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </section>
           }
@@ -270,7 +315,51 @@ export function TerminalPage() {
             </aside>
           }
         />
+        )}
 
+        {/* LIVE TAB */}
+        {tab === "Live" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <DecisionLog />
+            </div>
+            <div className="space-y-4">
+              <X402Panel />
+              <SwarmVisualizer />
+            </div>
+          </div>
+        )}
+
+        {/* ANALYTICS TAB */}
+        {tab === "Analytics" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-8">
+              <AgentRoster />
+            </div>
+            <div className="lg:col-span-4 space-y-4">
+              <BondSlashPanel />
+              {selected && <PnLPanel market={selected} />}
+            </div>
+          </div>
+        )}
+
+        {/* AGENTS TAB */}
+        {tab === "Agents" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div ref={rosterRef} data-tour="roster" className="lg:col-span-6">
+              <AgentRoster />
+            </div>
+            <div className="lg:col-span-3">
+              <BondSlashPanel />
+            </div>
+            <div ref={arbRef} className="lg:col-span-3">
+              <DuelsPanel />
+            </div>
+          </div>
+        )}
+
+        {/* OVERVIEW BOTTOM (only on Overview tab) */}
+        {tab === "Overview" && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4">
           <div ref={rosterRef} data-tour="roster" className="lg:col-span-6">
             <AgentRoster />
@@ -282,6 +371,7 @@ export function TerminalPage() {
             <DuelsPanel />
           </div>
         </div>
+        )}
       </div>
 
       <LiveTicker />
