@@ -173,7 +173,7 @@ export function TerminalPage() {
               </a>
               <BrandMark />
               <div>
-                <h1 className="text-xl font-bold tracking-tight text-white uppercase leading-none">
+                <h1 className="text-xl font-bold tracking-tight text-white uppercase leading-none" style={{ fontFamily: 'var(--font-display)' }}>
                   Puls <span className="text-teal">Terminal</span>
                 </h1>
                 <p className="text-[10px] font-mono text-slate-500 mt-1 uppercase tracking-widest">
