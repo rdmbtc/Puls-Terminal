@@ -1599,15 +1599,19 @@ function LiveTicker() {
   const events = data?.events ?? [];
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-navy/90 backdrop-blur-xl border-t border-glass-border z-40 overflow-hidden">
-      <div className="max-w-[1400px] mx-auto px-6 h-10 flex items-center gap-6">
-        <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
+      <div className="max-w-[1400px] mx-auto px-6 h-10 flex items-center gap-0">
+        <div className="flex items-center gap-2 whitespace-nowrap shrink-0 pr-4 z-10 bg-navy/90">
           <span className="size-1.5 bg-pink rounded-full animate-pulse" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-white">
             Live Tape
           </span>
         </div>
         <div className="flex-1 overflow-hidden relative">
-          <div className="flex items-center gap-6 text-[11px] font-mono whitespace-nowrap animate-[marquee_40s_linear_infinite] hover:pause" style={{ width: "max-content" }}>
+          {/* Left fade mask */}
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-navy/90 to-transparent z-10 pointer-events-none" />
+          {/* Right fade mask */}
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-navy/90 to-transparent z-10 pointer-events-none" />
+          <div className="flex items-center gap-6 text-[11px] font-mono whitespace-nowrap animate-[marquee_40s_linear_infinite]" style={{ width: "max-content" }}>
             {events.length === 0 && <span className="text-slate-600">Waiting for feed…</span>}
             {[...events.slice(0, 8), ...events.slice(0, 8)].map((e, i) => {
               const tone = feedTone(e.action);
